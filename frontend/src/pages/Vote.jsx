@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import NavBar from "../components/Navbar";
 
 /*
--format the form better you dumbass :D
+-format the form better you idiot :D
 -maybe add a count down timer ?
 -check user ip to ensure only one person can vote ?
 -add some more responsiveness you idioooooooooot (maybe ?)

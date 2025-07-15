@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import NavBar from "../components/Navbar";
 
 /*
--format the form better you dumbass :D
+-format the form better you idiot :D
 -add a button to copy the link! 
     who wants to doubleclick and press the copy button in the big 2025? less clicks = good
 -add some like "copieed to clipboard" msg or something bro

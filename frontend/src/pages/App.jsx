@@ -37,7 +37,7 @@ function App() {
     setCurrentOptions((prev) => [...prev, 
       {
         placeholder: `Option ${currentOptions.length+1}`,
-        id: `options${currentOptions.length+1}`
+        id: `option${currentOptions.length+1}`
       }
     ]);
   }
@@ -88,12 +88,11 @@ function App() {
           />
           <p className="validator-hint ml-5">Days be between be 1 to 14</p>
           {/* Submit and create poll by sending it to the database*/}
-          <input value="Submit Poll" className="btn btn-primary m-5 text-xl" onClick={() => {
+          <input type="submit" value="Submit Poll" className="btn btn-primary m-5 text-xl" onClick={() => {
             //update poll with the options
             let newOptions = [];
-            let numOfOptions = optionIndex + 2;
 
-            for (let i = 0; i < numOfOptions; i++) {
+            for (let i = 0; i < currentOptions.length; i++) {
               const option = document.getElementById(`option${i + 1}`).value;
               newOptions.push({ text: option });
             }
