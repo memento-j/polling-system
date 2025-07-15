@@ -16,50 +16,42 @@ function App() {
     activeDays: "",
     options: []
   });
-  //array to toggle on and off which options should be hidden or shown
-  const [showItems, setShowItems] = useState([false, false, false, false, false, false, false, false]);
-  //individual option element to be shown or hidden
-  const [optionIndex, setOptionIndex] = useState(0);
 
-  //flip the toggle to show a new option that the user can provide input for
-  function displayOptionInput() {
-    //dont increement anymore as there are no more options to be added
-    if (optionIndex === 8) {
-      return;
+  //used for generating the option input fields
+  const [currentOptions, setCurrentOptions] = useState([
+    {
+      placeholder: "Option 1",
+      id: "option1"
+    },
+    {
+      placeholder: "Option 2",
+      id: "option2"
     }
+  ])
 
-    //create new array and toggle only the index that for the input field needed to be shown
-    const newShowItems = showItems.map((toggle, index) => {
-      if (index === optionIndex) {
-        return !toggle;
+  function addOptionInput() {
+    //ensures no more than 10 options can be added
+    if (currentOptions.length === 10) return;
+
+    //add new option to end of array
+    setCurrentOptions((prev) => [...prev, 
+      {
+        placeholder: `Option ${currentOptions.length+1}`,
+        id: `options${currentOptions.length+1}`
       }
-      else {
-        return toggle;
-      }
-    });
-    setShowItems(newShowItems);
-    setOptionIndex(prev => prev + 1);
+    ]);
   }
 
-  //flip the toggle to remove an option that the user can provide input for
   function removeOptionInput() {
-    //dont decrement anymore as there are no more options to be removed
-    if (optionIndex === 0) {
-      return;
-    }
-    //create new array and toggle only the index that needs to be hidden
-    const newShowItems = showItems.map((toggle, index) => {
-      if (index === optionIndex - 1) {
-        return !toggle;
-      }
-      else {
-        return toggle;
-      }
-    });
-    setShowItems(newShowItems);
-    setOptionIndex(prev => prev - 1);
+    //dont remove if removing an options will cause there to be less than 2 total options
+    if (currentOptions.length === 2) return;
+
+    //remove last option
+    const filteredOptions = currentOptions.filter((_, index) => index != currentOptions.length-1);
+    setCurrentOptions(filteredOptions); 
   }
 
+  //outputs the poll (for debugging)
   //<p>question: {poll.question} activeDays: {poll.activeDays} options: {poll.options.map((option, i) => <li key={i}>{option.text}</li>)} </p>
   return (
     <div>
@@ -68,43 +60,25 @@ function App() {
       <div className="mt-15 mb-5 flex justify-center">
         <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-xl border p-4">
           <legend className="fieldset-legend text-4xl">Create Poll</legend>
-          {/* Enter question */}
+          {/* Enter question input */}
+          <label className="label text-2xl mt-3 ml-2">Question:</label>
           <input type="text" className="input w-xl text-[18px] m-5" placeholder="Poll question" onChange={(event) => setPoll({...poll, question: event.target.value})}/>
-          {/* Create options */}
-          <input id="option1" type="text" className="input text-[18px] w-xl m-5" placeholder="Option 1" />
-          <input id="option2" type="text" className="input text-[18px] w-xl m-5" placeholder="Option 2" />
-          {showItems[0] && (
-            <input id="option3" type="text" className="input text-[18px] w-xl m-5" placeholder="Option 3"/>
-          )}
-          {showItems[1] && (
-            <input id="option4" type="text" className="input text-[18px] w-xl m-5" placeholder="Option 4" />
-          )}
-          {showItems[2] && (
-            <input id="option5" type="text" className="input text-[18px] w-xl m-5" placeholder="Option 5" />
-          )}
-          {showItems[3] && (
-            <input id="option6" type="text" className="input text-[18px] w-xl m-5" placeholder="Option 6" />
-          )}
-          {showItems[4] && (
-            <input id="option7" type="text" className="input text-[18px] w-xl m-5" placeholder="Option 7" />
-          )}
-          {showItems[5] && (
-            <input id="option8" type="text" className="input text-[18px] w-xl m-5" placeholder="Option 8" />
-          )}
-          {showItems[6] && (
-            <input id="option9" type="text" className="input text-[18px] w-xl m-5" placeholder="Option 9" />
-          )}
-          {showItems[7] && (
-            <input id="option10" type="text" className="input text-[18px] w-xl m-5" placeholder="Option 10" />
+          {/* Create options input */}
+          <label className="label text-2xl mt-3 ml-2">Options:</label>
+          {currentOptions.map((option, _) =>
+            <div key={option.id}>
+              <input id={option.id} type="text" className="input text-[18px] w-xl m-5" placeholder={option.placeholder} />
+            </div>
           )}
           <div className="flex">
-            <input type="button" className="btn btn-primary m-3 w-2xs" value="Add Option" onClick={displayOptionInput}/>
+            <input type="button" className="btn btn-primary m-3 w-2xs" value="Add Option" onClick={addOptionInput}/>
             <input type="button" className="btn btn-primary m-3 w-2xs" value="Remove Option" onClick={removeOptionInput}/>
           </div>
           {/* Enter number of days */}
+          <label className="label text-2xl mt-3 ml-2">Active Polling Days:</label>
           <input
             type="number"
-            className="input validator w-xl mt-10 ml-5 mb-5 mr-5 text-[18px]"
+            className="input validator w-xl mt-5 ml-5 mr-5 text-[18px]"
             required
             placeholder="Enter number of days for the poll (1-14)"
             min="1"
@@ -114,7 +88,7 @@ function App() {
           />
           <p className="validator-hint ml-5">Days be between be 1 to 14</p>
           {/* Submit and create poll by sending it to the database*/}
-          <input type="submit" value="Submit Poll" className="btn btn-primary m-5 text-xl" onClick={() => {
+          <input value="Submit Poll" className="btn btn-primary m-5 text-xl" onClick={() => {
             //update poll with the options
             let newOptions = [];
             let numOfOptions = optionIndex + 2;

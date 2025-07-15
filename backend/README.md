@@ -36,7 +36,3 @@ GET /poll - returns all polls created
 ...
 }
 ]
-
-## Features
-
-- Swagger docs
