@@ -1,0 +1,21 @@
+{
+  "name": "polling-system",
+  "types": "module",
+  "version": "1.0.0",
+  "description": "create polls",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node --watch index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "bcrpyt": "^2.0.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "mongoose": "^8.16.2"
+  }
+}
