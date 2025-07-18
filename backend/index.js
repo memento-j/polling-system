@@ -5,6 +5,7 @@ import { Poll } from "./models/Poll.js";
 import { User } from "./models/User.js";
 import bcrypt from "bcryptjs";
 import { mongoAtlasUri } from "./uri.js";
+import jwt from "jsonwebtoken";
 
 //configure cors to accept requests from the frontend server
 const corsOptions = {
@@ -24,6 +25,21 @@ app.use(express.json());
 //initialize app to use cors
 app.use(cors(corsOptions));
 const PORT = 8080;
+
+//creaate authentication middleware
+const isAuthenticated = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    req.user = decoded;
+    next();
+  });
+};
 
 // get all polls
 app.get("/polls", async (req, res) => {
@@ -56,10 +72,10 @@ app.get("/poll/:id", async (req, res) => {
 // create poll
 app.post("/poll/create", async (req, res) => {
   const { question, activeDays, options } = req.body;
-
+  //gets deadline 
   const deadlineDate = new Date();
   deadlineDate.setDate(deadlineDate.getDate() + activeDays);
-
+  //create poll obj
   const poll = {
     question,
     deadline: deadlineDate,
@@ -68,7 +84,7 @@ app.post("/poll/create", async (req, res) => {
       return option;
     }),
   };
-
+  //add poll obj to db
   try {
     const pollCreated = await Poll(poll);
     await pollCreated.save();
@@ -96,7 +112,6 @@ app.post("/poll/:id", async (req, res) => {
 
     poll.markModified("options");
     await poll.save();
-
     res.send(poll);
   } catch (error) {
     //501 means not implemented
@@ -108,7 +123,6 @@ app.post("/poll/:id", async (req, res) => {
 app.post("/user/create", async (req, res) => {
   //retrieve user attributes from req body
   const { username, email, password } = req.body;
-
   try {
     //check if username and email are duplicate in the db
     const existingEmail = await User.findOne({ email });
@@ -130,10 +144,13 @@ app.post("/user/create", async (req, res) => {
     const userCreated = await User(user);
     await userCreated.save();
 
-    //do jwt token stuff
+    //do jwt stuff
+    //
+    //
+    //
 
     //201 means created
-    res.status(201);
+    res.status(201).json(user);
    } catch(error) {
     //400 means bad request
     res.status(400).json({error: error.message});
@@ -142,7 +159,34 @@ app.post("/user/create", async (req, res) => {
 
 //login a user
 app.post("/user/login", async (req, res) => {
-  const { username, password } = req.body;
+  try {
+    const { email, password } = req.body;
+    //get potential user from only the email
+    const potentialUser = await User.findOne({email});
+    if (!potentialUser) {
+      //401 means unauthorized
+      res.status(401).json({error: "Invalid email"});
+      return;
+    }
+    //user exists, so store the hashed password
+    const hashedPassword = potentialUser.password;
+
+    //now compare the user inputted password with the stored hashed password
+    const isMatch = await bcrypt.compare(password, hashedPassword);
+    
+    if (!isMatch) {
+      //401 means unauthorized
+      res.status(401).json({error: "Invalid password"});
+      return;
+    }
+    //everything is fine, so return the user
+    res.status(200).json(potentialUser);
+  } catch (error) {
+    //on an error, return error message
+    //500 means internal server error
+    res.status(500).json({error : error.message});
+  }
+
 });
 
 app.listen(PORT, console.log("port working"));

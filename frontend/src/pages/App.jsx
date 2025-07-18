@@ -59,7 +59,7 @@ function App() {
       {/* Create poll field */}
       <div className="mt-15 mb-5 flex justify-center">
         <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-xl border p-4">
-          <legend className="fieldset-legend text-4xl">Create Poll</legend>
+          <legend className="fieldset-legend text-4xl">Create Public Poll</legend>
           {/* Enter question input */}
           <label className="label text-2xl mt-3 ml-2">Question:</label>
           <input type="text" className="input w-xl text-[18px] m-5" placeholder="Poll question" onChange={(event) => setPoll({...poll, question: event.target.value})}/>
