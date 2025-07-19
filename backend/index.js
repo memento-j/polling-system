@@ -6,11 +6,14 @@ import { User } from "./models/User.js";
 import bcrypt from "bcryptjs";
 import { mongoAtlasUri, JWT_SECRET } from "./uri.js";
 import jwt from "jsonwebtoken";
+import cookieParser from "cookie-parser";
 
 //configure cors to accept requests from the frontend server
 const corsOptions = {
   //vite servers run on port 5173
   origin : ["http://localhost:5173"],
+  //allows cookies to be sent
+  credentials: true,
 };
 
 mongoose
@@ -22,6 +25,8 @@ const app = express();
 app.use(express.json());
 //initialize app to use cors
 app.use(cors(corsOptions));
+//enables req.cookies 
+app.use(cookieParser());
 const PORT = 8080;
 
 //creaate authentication middleware
@@ -196,23 +201,53 @@ app.post("/user/login", async (req, res) => {
       { id: potentialUser._id, username: potentialUser.username, email: potentialUser.email },
       JWT_SECRET
     );
+    
+    res.cookie("token", token, {
+      httpOnly: true, // Prevent JS access
+      secure: false, // Use HTTPS in production
+      sameSite: "Strict", // Prevent CSRF with strict
+      maxAge: 3600000, // 1 hour
+    });
 
     //everything is fine, so return the jwt token
-    res.status(200).json(token);
-  } catch (error) {
-    //on an error, return error message
-    //500 means internal server error
-    res.status(500).json({error : error.message});
+    res.status(200).json({message: "signed in :)"});
+    } catch (error) {
+      //on an error, return error message
+      //500 means internal server error
+      res.status(500).json({error : error.message});
   }
 
-  //delete poll (if authenticated and created it)
-
-  //if authenticated, add poll to account (likke a favoritees tab)
-
-  //create private poll (if authenticated) and add to account
-
-  //vote on private poll (if authenticated)
-
 });
+
+app.post("/user/logout", (req, res) => {
+
+  // Clear the httpOnly cookie
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "Strict",
+  });
+
+  // Send a success response
+  res.status(200).json({message: "Logged out successfully"});
+  res.end();
+});
+
+//get user information and return it in json format so it can be used on the frontend
+app.get("/user", (req, res) => {
+  //check if there is a token
+  if (!req.cookies.token) {
+    
+  }
+});
+
+
+//delete poll (if authenticated and created it)
+
+//if authenticated, add poll to account (likke a favoritees tab)
+
+//create private poll (if authenticated) and add to account
+
+//vote on private poll (if authenticated)
 
 app.listen(PORT, console.log("port working"));

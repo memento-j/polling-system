@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"
 import NavBar from "../components/Navbar";
 import ActivePolls from "../components/ActivePolls";

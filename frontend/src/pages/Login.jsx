@@ -1,12 +1,41 @@
 import NavBar from "../components/Navbar";
-
+import { useNavigate } from "react-router-dom";
 export default function Login() {
     //state for when incorrect inputs are given
+    //
+    const navigate = useNavigate();
 
     async function handleSubmit(event) {
         //prevent page from refeshing on submit
         event.preventDefault();
-        console.log("hi");
+        //get form data
+        const formData = new FormData(event.target);
+        const email = formData.get("email");
+        const password = formData.get("password");
+
+        const user = {
+            email,
+            password
+        }
+
+        try {
+            //login using endpoint
+            const res = await fetch("http://localhost:8080/user/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify(user)
+            });
+            //if bad response
+            if (!res.ok) {
+                throw new Error("failed to login")
+            }
+            navigate("/");
+        } catch(error) {
+            console.error("error:", error);
+        }
         
     }
 
@@ -20,10 +49,10 @@ export default function Login() {
                         <legend className="fieldset-legend text-4xl">Login</legend>
                         {/* Email */}
                         <label className="label text-2xl mt-5 ml-7 mb-2">Email</label>
-                        <input id="email" type="email" className="input w-xl ml-7 text-lg" placeholder="Email" />
+                        <input id="email" name="email" type="email" className="input w-xl ml-7 text-lg" placeholder="Email" />
                         {/* Password */}
                         <label className="label text-2xl mt-5 ml-7 mb-2">Password</label>
-                        <input id="password" type="password" className="ml-7 input w-xl text-lg" placeholder="Password" />
+                        <input id="password" name="password" type="password" className="ml-7 input w-xl text-lg" placeholder="Password" />
                         {/* Submit button */}
                         <button className="btn btn-primary btn-xl my-15 mx-7" type="submit">Login</button>
                     </fieldset>
