@@ -6,7 +6,6 @@ import ActivePolls from "../components/ActivePolls";
 /*  
 -figure out how to remove the forms based off the time provided :D
   aka add another api endpoint buddy (:
--add a section on the bottom that shows current running polls
 */
 
 function App() {

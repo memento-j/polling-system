@@ -1,6 +1,7 @@
 import NavBar from "../components/Navbar";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export default function Signup() {
     const [validUsername, setValidUsername] = useState(true);
@@ -13,9 +14,11 @@ export default function Signup() {
     return(
         <div>
             <NavBar />
-            <div className="mt-50 flex justify-center ">
+            <p className="text-5xl text-center mt-30">Sign up to create private polls and manage your polls!</p>
+            <div className="mt-30 flex justify-center ">
                 <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-2xl border p-4">
                     <legend className="fieldset-legend text-4xl">Sign up</legend>
+                    <label className="label text-2xl mt-5 ml-7 mb-2">Already have an account? <Link to="/login" className="text-primary">Login Here</Link></label>
                     {/* user already exsists */}
                     {userExists && <p className="text-error ml-7 text-[20px]">Username or Email already exist</p>}
                     {/* Username */}

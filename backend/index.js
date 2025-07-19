@@ -4,7 +4,7 @@ import cors from "cors";
 import { Poll } from "./models/Poll.js";
 import { User } from "./models/User.js";
 import bcrypt from "bcryptjs";
-import { mongoAtlasUri } from "./uri.js";
+import { mongoAtlasUri, JWT_SECRET } from "./uri.js";
 import jwt from "jsonwebtoken";
 
 //configure cors to accept requests from the frontend server
@@ -13,10 +13,8 @@ const corsOptions = {
   origin : ["http://localhost:5173"],
 };
 
-const mongo_uri = mongoAtlasUri;
-
 mongoose
-  .connect(mongo_uri)
+  .connect(mongoAtlasUri)
   .then(() => console.log("connected to db"))
   .catch((error) => console.log(error));
 
@@ -28,14 +26,21 @@ const PORT = 8080;
 
 //creaate authentication middleware
 const isAuthenticated = (req, res, next) => {
+  // ex: Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR... 
+  // splitting this with " ", the token, eyJhbGciOiJIUzI1NiIsInR..., will be in the second input
+  // ?. = optional chaining operaator , if the function called is undefined or null, the expression returns
+  //undefined instead of throwing an error
   const token = req.headers.authorization?.split(" ")[1];
+  //no token found
   if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+  //verifies using token and secret key
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {
       return res.status(401).json({ error: "Unauthorized" });
     }
+    //sets req.user to the decoded payload
     req.user = decoded;
     next();
   });
@@ -97,6 +102,11 @@ app.post("/poll/create", async (req, res) => {
 
 // update vote count
 app.post("/poll/:id", async (req, res) => {
+  //check request ip in database (get ip from req.ip) 
+  //if found, return error saying user cant vote twice
+  //if not found, add it to db and continue letting the user vote
+  //not sure how it works, so might have to get the ip from the frontend instead?
+  
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       res.status(501).send("Invalid id");
@@ -139,18 +149,19 @@ app.post("/user/create", async (req, res) => {
       username,
       email,
       password: hash
-    }
+    };
 
     const userCreated = await User(user);
     await userCreated.save();
 
-    //do jwt stuff
-    //
-    //
-    //
+    //sign jwt token
+    const token = jwt.sign(
+      { id: userCreated._id, username: userCreated.username, email: userCreated.email },
+      JWT_SECRET
+    );
 
     //201 means created
-    res.status(201).json(user);
+    res.status(201).json(token);
    } catch(error) {
     //400 means bad request
     res.status(400).json({error: error.message});
@@ -179,13 +190,28 @@ app.post("/user/login", async (req, res) => {
       res.status(401).json({error: "Invalid password"});
       return;
     }
-    //everything is fine, so return the user
-    res.status(200).json(potentialUser);
+
+    //jwt stuff
+    const token = jwt.sign(
+      { id: potentialUser._id, username: potentialUser.username, email: potentialUser.email },
+      JWT_SECRET
+    );
+
+    //everything is fine, so return the jwt token
+    res.status(200).json(token);
   } catch (error) {
     //on an error, return error message
     //500 means internal server error
     res.status(500).json({error : error.message});
   }
+
+  //delete poll (if authenticated and created it)
+
+  //if authenticated, add poll to account (likke a favoritees tab)
+
+  //create private poll (if authenticated) and add to account
+
+  //vote on private poll (if authenticated)
 
 });
 

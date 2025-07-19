@@ -9,7 +9,7 @@ export default function NavBar() {
             <div className="flex-none">
                 <ul className="menu menu-horizontal px-1">
                 <li><Link className="btn btn-primary btn-lg m-5" to={{ pathname: "/"}}>Create Poll</Link></li>
-                <li><Link className="btn btn-primary btn-lg m-5" to={{ pathname: "/signup"}}>Login/Signup</Link></li>
+                <li><Link className="btn btn-primary btn-lg m-5" to={{ pathname: "/signup"}}>Sign up or Login</Link></li>
                 </ul>
             </div>
         </div>

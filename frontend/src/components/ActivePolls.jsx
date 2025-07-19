@@ -4,8 +4,15 @@ import PollCard from "./PollCard"
 export default function ActivePolls() {
     const [currentPolls, setCurrentPolls] = useState(undefined);
 
+    function getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min)) + min; // The maximum is exclusive and the minimum is inclusive
+    }
+
     //on mount, get current active polls (up to 5 ?)
     useEffect(() => {
+        
         fetch("http://localhost:8080/polls", {
             method: "GET",
             headers: {
@@ -34,21 +41,21 @@ export default function ActivePolls() {
             {currentPolls &&
                 <div className="carousel w-1/4">
                     <div id="slide1" className="carousel-item relative w-full justify-center m-5">
-                        <PollCard question={currentPolls[0]["question"]} id={currentPolls[0]["_id"]}/>
+                        <PollCard question={currentPolls[getRandomInt(0,currentPolls.length)]["question"]} id={currentPolls[getRandomInt(0,currentPolls.length)]["_id"]}/>
                         <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
                         <a href="#slide3" className="btn btn-circle">❮</a>
                         <a href="#slide2" className="btn btn-circle">❯</a>
                         </div>
                     </div>
                     <div id="slide2" className="carousel-item relative w-full justify-center m-5">
-                        <PollCard question={currentPolls[1]["question"]} id={currentPolls[1]["_id"]}/>
+                        <PollCard question={currentPolls[getRandomInt(0,currentPolls.length)]["question"]} id={currentPolls[getRandomInt(0,currentPolls.length)]["_id"]}/>
                         <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
                         <a href="#slide1" className="btn btn-circle">❮</a>
                         <a href="#slide3" className="btn btn-circle">❯</a>
                         </div>
                     </div>
                     <div id="slide3" className="carousel-item relative w-full justify-center m-5">
-                        <PollCard question={currentPolls[2]["question"]} id={currentPolls[2]["_id"]}/>
+                        <PollCard question={currentPolls[getRandomInt(0,currentPolls.length)]["question"]} id={currentPolls[getRandomInt(0,currentPolls.length)]["_id"]}/>
                         <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
                         <a href="#slide2" className="btn btn-circle">❮</a>
                         <a href="#slide1" className="btn btn-circle">❯</a>
