@@ -95,10 +95,7 @@ app.post("/poll/create-private", isAuthenticated, async (req, res) => {
     const pollCreated = await Poll(poll);
     await pollCreated.save();
 
-    //
-    // 1.) change vote.jsx to ensure only authenticated users can vote on private polls
-    // update navbar with buttons for these pages below
-    // 2.) new page for displaying all of a user's polls with a view and delete button for each of them
+
   
     // add poll obj to user's polls
     await User.updateOne({_id: userId} , { $push : { polls: pollCreated }});

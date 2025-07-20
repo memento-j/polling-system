@@ -12,8 +12,12 @@ import NavBar from "../components/Navbar";
 */
 
 //
+// 1.) change vote.jsx to ensure only authenticated users can vote on private polls
+// update navbar with buttons for these pages below
+
 export default function Vote() {
     const [poll, setPoll] = useState(undefined);
+    const [isPrivatePoll, setIsPrivatePoll] = useState(false);
     const navigate = useNavigate();
 
     //get poll data to display on mount
@@ -37,6 +41,7 @@ export default function Vote() {
             .then((data) => {
                 console.log("Successfully retrieved poll", data);
                 //set poll data
+                setIsPrivatePoll(data.isPrivate);
                 setPoll(data);
             })
             .catch((error) => {
@@ -51,7 +56,9 @@ export default function Vote() {
                 {/* Render poll information once it is defined*/}
                 {poll &&
                     <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-3xl h-6/12 border p-4">
-                        <legend className="fieldset-legend text-4xl">Poll</legend>
+                        {isPrivatePoll ? 
+                            <legend className="fieldset-legend text-4xl">Private Poll</legend> :
+                            <legend className="fieldset-legend text-4xl">Public Poll</legend>}
                         <div>
                             <p className="text-2xl mt-2">Send this link to others so they can vote also!</p>
                             <p className="text-2xl"> {`http://localhost:5173/vote?id=${poll._id}`}</p>
@@ -70,7 +77,7 @@ export default function Vote() {
                             )}
                         </ul>
                         {/* cast vote button that updates vote count in db*/}
-                        <input type="submit" value="Cast Vote" className="btn btn-primary m-5 text-xl" onClick={() => {
+                        <input type="submit" value="Cast Vote" className="btn btn-primary m-5 text-xl" onClick={async () => {
                             //get options selected
                             let optionObj = { option: ""};
                             //go through each option and add the checked option's index to the optionObj
@@ -86,28 +93,52 @@ export default function Vote() {
                                 console.log("no option selecteed");
                                 return;
                             }
-                            //send post request updating the selected option's vote count
-                            fetch(`http://localhost:8080/poll/${poll._id}`, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify(optionObj),
-                            })
-                            .then((response) => {
-                                if (!response.ok) {
-                                throw new Error("Network response was not ok");
+                            
+                            //if public poll, use the public poll voting endpoint
+                            if (!isPrivatePoll) {
+                                try {
+                                    //send post request updating the selected option's vote count
+                                    const res = await fetch(`http://localhost:8080/poll/${poll._id}`, {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify(optionObj),
+                                    });
+                                    if (!res.ok) {
+                                        throw new Error("Network response was not ok");
+                                    }
+                                    const data = await res.json();
+                                    console.log("Vote updated:", data);
+                                    //load poll's page
+                                    navigate(`/poll?id=${data._id}`);
+                                } catch (error) {
+                                    console.error("Error adding poll:", error);
                                 }
-                                return response.json();
-                            })
-                            .then((data) => {
-                                console.log("Vote updated:", data);
-                                //load poll's page
-                                navigate(`/poll?id=${data._id}`); 
-                            })
-                            .catch((error) => {
-                                console.error("Error adding poll:", error);
-                            });
+                            }
+                            //if private poll, use the private poll voting endpoint which includes authenication
+                            else {
+                                try {
+                                    //send post request updating the selected option's vote count after authenticating the user
+                                    const res = await fetch(`http://localhost:8080/poll/private/${poll._id}`, {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    credentials: "include",
+                                    body: JSON.stringify(optionObj),
+                                    });
+                                    if (!res.ok) {
+                                        throw new Error("Network response was not ok");
+                                    }
+                                    const data = await res.json();
+                                    console.log("Vote updated:", data);
+                                    //load poll's page
+                                    navigate(`/poll?id=${data._id}`);
+                                } catch(error) {
+                                   console.error("Error adding poll:", error); 
+                                }
+                            }
                         }}/>
                     </fieldset>
                 }
