@@ -61,7 +61,7 @@ export default function NavBar() {
     return(
         <div className="navbar bg-base-100">
             <div className="flex-1">
-                <Link className="btn btn-ghost text-5xl ml-10" to={{ pathname: "/"}}>Polling System</Link>
+                <Link className="btn btn-ghost text-5xl ml-10 p-8" to={{ pathname: "/"}}>Polling System</Link>
             </div>
             {/* signed out message */}
             { showSignout && 
@@ -77,13 +77,13 @@ export default function NavBar() {
             { user != null ? 
             (
                 <ul className="menu menu-horizontal px-1 mr-10">
-                    <li><Link className="btn btn-primary btn-lg m-5" to={{ pathname: "/"}}>Create Public/Private Poll</Link></li>
-                    <li onClick={logout} className="btn btn-primary btn-lg m-5">Logout of {user.username}</li>
+                    <li><Link className="btn btn-primary btn-lg text-xl m-5" to={{ pathname: "/create-poll"}}>Create Public/Private Poll</Link></li>
+                    <li onClick={logout} className="btn btn-primary text-xl btn-lg m-5">Logout of {user.username}</li>
                 </ul>
             ) : 
                  <ul className="menu menu-horizontal px-1 mr-10">
-                    <li><Link className="btn btn-primary btn-lg m-5" to={{ pathname: "/"}}>Create Public Poll</Link></li>
-                    <li><Link className="btn btn-primary btn-lg m-5" to={{ pathname: "/signup"}}>Sign up or Login</Link></li>
+                    <li><Link className="btn btn-primary btn-lg text-xl m-5" to={{ pathname: "/create-poll"}}>Create Public Poll</Link></li>
+                    <li><Link className="btn btn-primary btn-lg text-xl m-5" to={{ pathname: "/signup"}}>Sign up or Login</Link></li>
                 </ul>           
             }
             </div>

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"
 import NavBar from "../components/Navbar";
-import ActivePolls from "../components/ActivePolls";
 
 /*  
 -figure out how to remove the forms based off the time provided :D
@@ -56,7 +55,7 @@ function App() {
     <div>
       <NavBar/>
       {/* Create poll field */}
-      <div className="mt-15 mb-5 flex justify-center">
+      <div className="mt-20 mb-5 flex justify-center">
         <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-xl border p-4">
           <legend className="fieldset-legend text-4xl">Create Poll</legend>
           <label className="label text-2xl mt-3 ml-2 mb-3">Select poll type:</label>
@@ -168,8 +167,6 @@ function App() {
           }}/>
         </fieldset>
       </div>
-      <p className="text-center text-3xl mt-10">Some Currently Active Polls</p>
-      <ActivePolls />
     </div>
   )
 }
