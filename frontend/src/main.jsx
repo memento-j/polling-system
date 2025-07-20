@@ -6,8 +6,10 @@ import Poll from './pages/Poll.jsx'
 import Vote from './pages/Vote.jsx'
 import Signup from './pages/Signup.jsx'
 import Login from './pages/Login.jsx'
+import UserContextProvider from './context/UserContext.jsx'
 
 createRoot(document.getElementById('root')).render(
+  <UserContextProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
@@ -17,4 +19,5 @@ createRoot(document.getElementById('root')).render(
         <Route path="/signup" element={<Signup />} />
       </Routes>
     </BrowserRouter>
+  </UserContextProvider>
 )

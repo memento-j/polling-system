@@ -95,7 +95,21 @@ app.post("/poll/create-private", isAuthenticated, async (req, res) => {
     const pollCreated = await Poll(poll);
     await pollCreated.save();
     // and poll obj to user's polls
-    await Poll.
+    //
+    // stuff left to do: 
+    // 1.) this! (add the poll obj to the user's polls array (look users schema))
+    // 2.) change vote.jsx to ensure only authenticated users can vote on private polls
+    // update navbar with buttons for these pages
+    // 3.) new page for displaying all current polls
+    // 4.) new page for displaying all of a user's polls with a view and delete button for each of them
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    //await User.updateOne
     res.send(pollCreated);
   } catch (error) {
     console.log(error);
@@ -271,9 +285,16 @@ app.post("/user/create", async (req, res) => {
       { id: userCreated._id, username: userCreated.username, email: userCreated.email },
       JWT_SECRET
     );
+    //create httponly cookie
+    res.cookie("token", token, {
+      httpOnly: true, // Prevent JS access
+      secure: false, // Use HTTPS in production
+      sameSite: "Strict", // Prevent CSRF with strict
+      maxAge: 3600000, // 1 hour
+    });
 
-    //201 means created
-    res.status(201).json(token);
+    //everything is fine, so return ok status with signeed in message
+    res.status(200).json({message: "signup success :)"});
    } catch(error) {
     //400 means bad request
     res.status(400).json({error: error.message});
@@ -327,6 +348,10 @@ app.post("/user/login", async (req, res) => {
 
 //logout user
 app.post("/user/logout", (req, res) => {
+  //no one to sign out
+  if (req.cookies.token == undefined) {
+    res.status(204).json({message: "no one signed in to be logged out"})
+  }
   // Clear the httpOnly cookie
   res.clearCookie("token", {
     httpOnly: true,
@@ -341,10 +366,11 @@ app.post("/user/logout", (req, res) => {
 app.get("/user", (req, res) => {
   //check if there is a token
   if (!req.cookies.token) {
-    res.status(401).json({message:"no jwt cookie found"})
+    return res.status(401).json({message:"no jwt cookie found"})
   }
   //jwt from request
   const token = req.cookies.token;
+  
   //verifies using token and secret key
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {

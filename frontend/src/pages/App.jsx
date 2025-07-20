@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom"
 import NavBar from "../components/Navbar";
 import ActivePolls from "../components/ActivePolls";
@@ -58,7 +58,16 @@ function App() {
       {/* Create poll field */}
       <div className="mt-15 mb-5 flex justify-center">
         <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-xl border p-4">
-          <legend className="fieldset-legend text-4xl">Create Public Poll</legend>
+          <legend className="fieldset-legend text-4xl">Create Poll</legend>
+          <label className="label text-2xl mt-3 ml-2 mb-3">Select poll type:</label>
+          <fieldset className="fieldset ml-5">
+            <select id="pollType" defaultValue="Pick poll type" className="select select-lg text-base-content">
+              <option disabled={true}>Pick poll type</option>
+              <option value="public">Public</option>
+              <option value="private">Private</option>
+            </select>
+            <span className="label text-[16px]">Only users with accounts can vote on and create private polls!</span>
+          </fieldset>
           {/* Enter question input */}
           <label className="label text-2xl mt-3 ml-2">Question:</label>
           <input type="text" className="input w-xl text-[18px] m-5" placeholder="Poll question" onChange={(event) => setPoll({...poll, question: event.target.value})}/>
@@ -87,7 +96,7 @@ function App() {
           />
           <p className="validator-hint ml-5">Days be between be 1 to 14</p>
           {/* Submit and create poll by sending it to the database*/}
-          <input type="submit" value="Submit Poll" className="btn btn-primary m-5 text-xl" onClick={() => {
+          <input type="submit" value="Submit Poll" className="btn btn-primary m-5 text-xl" onClick={async () => {
             //update poll with the options
             let newOptions = [];
 
@@ -95,35 +104,67 @@ function App() {
               const option = document.getElementById(`option${i + 1}`).value;
               newOptions.push({ text: option });
             }
+            //get poll type
+            const pollType = document.getElementById("pollType").value;
 
-            // Create a new poll object including the options
-            const newPoll = {
+            if (pollType == "public") {
+              //create public poll
+              const newPoll = {
               ...poll,
               options: newOptions,
-            };
-            
-            //add poll to db
-            fetch("http://localhost:8080/poll/create", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(newPoll),
-            })
-              .then((response) => {
-                if (!response.ok) {
+              isPrivate: false,
+              };
+              try {
+                const res = await fetch("http://localhost:8080/poll/create", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify(newPoll),
+                });
+                if (!res.ok) {
                   throw new Error("Network response was not ok");
                 }
-                return response.json();
-              })
-              .then((data) => {
+                const data = await res.json();
                 console.log("Poll added successfully:", data);
                 //load page with the id
                 navigate(`/poll?id=${data._id}`); 
-              })
-              .catch((error) => {
+              } catch(error) {
                 console.error("Error adding poll:", error);
-              });
+              }
+            }
+            else if (pollType == "private") {
+              //create private poll
+              const newPoll = {
+              ...poll,
+              options: newOptions,
+              isPrivate: true,
+              };
+              try {
+                const res = await fetch("http://localhost:8080/poll/create-private", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  //ensure cookies can be passed to backend
+                  credentials: "include",
+                  body: JSON.stringify(newPoll),
+                });
+                if (!res.ok) {
+                  throw new Error("Network response was not ok");
+                }
+                const data = await res.json();
+                console.log("Poll added successfully:", data);
+                //load page with the id
+                navigate(`/poll?id=${data._id}`); 
+              } catch(error) {
+                console.error("Error adding poll:", error);
+              }
+            }
+            else {
+              //poll type not selected
+              
+            }
           }}/>
         </fieldset>
       </div>
