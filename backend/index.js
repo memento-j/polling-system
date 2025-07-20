@@ -94,22 +94,15 @@ app.post("/poll/create-private", isAuthenticated, async (req, res) => {
     //add poll schema to db
     const pollCreated = await Poll(poll);
     await pollCreated.save();
-    // and poll obj to user's polls
+
     //
-    // stuff left to do: 
-    // 1.) this! (add the poll obj to the user's polls array (look users schema))
-    // 2.) change vote.jsx to ensure only authenticated users can vote on private polls
-    // update navbar with buttons for these pages
-    // 3.) new page for displaying all current polls
-    // 4.) new page for displaying all of a user's polls with a view and delete button for each of them
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-    //await User.updateOne
+    // 1.) change vote.jsx to ensure only authenticated users can vote on private polls
+    // update navbar with buttons for these pages below
+    // 2.) new page for displaying all of a user's polls with a view and delete button for each of them
+  
+    // add poll obj to user's polls
+    await User.updateOne({_id: userId} , { $push : { polls: pollCreated }});
+    
     res.send(pollCreated);
   } catch (error) {
     console.log(error);

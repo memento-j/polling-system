@@ -5,9 +5,8 @@ import { Link } from "react-router-dom";
 export default function CurrentPolls() {
     const [currentPolls, setCurrentPolls] = useState(undefined);
 
-    //on mount, get current active polls (up to 5 ?)
+    //on mount, get current active polls
     useEffect(() => {
-        
         fetch("http://localhost:8080/polls", {
             method: "GET",
             headers: {
