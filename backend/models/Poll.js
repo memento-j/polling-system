@@ -13,6 +13,13 @@ const pollSchema = new Schema({
     type: Object,
     required: true,
   },
+  isPrivate: {
+    type: Boolean,
+    required: true
+  },
+  owner: {
+    type: String,
+  }
 });
 
 export const Poll = model("Poll", pollSchema);

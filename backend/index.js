@@ -1,12 +1,13 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+import cookieParser from "cookie-parser";
 import { Poll } from "./models/Poll.js";
 import { User } from "./models/User.js";
-import bcrypt from "bcryptjs";
 import { mongoAtlasUri, JWT_SECRET } from "./uri.js";
-import jwt from "jsonwebtoken";
-import cookieParser from "cookie-parser";
+
 
 //configure cors to accept requests from the frontend server
 const corsOptions = {
@@ -31,11 +32,8 @@ const PORT = 8080;
 
 //creaate authentication middleware
 const isAuthenticated = (req, res, next) => {
-  // ex: Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR... 
-  // splitting this with " ", the token, eyJhbGciOiJIUzI1NiIsInR..., will be in the second input
-  // ?. = optional chaining operaator , if the function called is undefined or null, the expression returns
-  //undefined instead of throwing an error
-  const token = req.headers.authorization?.split(" ")[1];
+  //get jwt from cookie
+  const token = req.cookies.token;
   //no token found
   if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
@@ -61,6 +59,110 @@ app.get("/polls", async (req, res) => {
   }
 });
 
+//create private poll (if authenticated) and add to account
+app.post("/poll/create-private", isAuthenticated, async (req, res) => {
+  const { question, activeDays, options, isPrivate} = req.body;
+  //gets deadline 
+  const deadlineDate = new Date();
+  deadlineDate.setDate(deadlineDate.getDate() + activeDays);
+
+  //get the user id from the token cookie
+  const userToken = req.cookies.token;
+  let userId = "";
+  //verifies using token and secret key, then stores current user id if successful
+  jwt.verify(userToken, JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    userId = decoded.id; 
+  });
+
+  //create poll obj
+  const poll = {
+    question,
+    deadline: deadlineDate,
+    options: options.map((option) => {
+      option.vote = 0;
+      return option;
+    }),
+    isPrivate,
+    owner: userId
+  };
+
+  //add poll obj to db and update user's polls
+  try {
+    //add poll schema to db
+    const pollCreated = await Poll(poll);
+    await pollCreated.save();
+    // and poll obj to user's polls
+    await Poll.
+    res.send(pollCreated);
+  } catch (error) {
+    console.log(error);
+    res.status(501).send(error);
+  }
+});
+
+
+// create poll
+app.post("/poll/create", async (req, res) => {
+  const { question, activeDays, options } = req.body;
+  //gets deadline 
+  const deadlineDate = new Date();
+  deadlineDate.setDate(deadlineDate.getDate() + activeDays);
+  //create poll obj
+  const poll = {
+    question,
+    deadline: deadlineDate,
+    options: options.map((option) => {
+      option.vote = 0;
+      return option;
+    }),
+    isPrivate: false,
+  };
+  //add poll obj to db
+  try {
+    const pollCreated = await Poll(poll);
+    await pollCreated.save();
+    res.send(pollCreated);
+  } catch (error) {
+    console.log(error);
+    res.status(501).send(error);
+  }
+});
+
+//delete poll (if authenticated and the current authenticated user created it)
+app.delete("/poll/delete/:id", isAuthenticated, async (req,res) => {
+  try {
+    //check if the id of the user is the same as the id of the user that created the poll
+    const userToken = req.cookies.token;
+    let userId = "";
+    //verifies using token and secret key, then stores current user id if successful
+    jwt.verify(userToken, JWT_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      userId = decoded.id; 
+    });
+
+    //search poll using req param and get the id of the user that created it
+    const poll = await Poll.findById(req.params.id);
+    if (!poll) {
+      res.status(404).send("Poll not found!");
+    }
+    //if current user and poll owner ids are equal, delete the poll
+    if (userId === poll.owner) {
+      await Poll.deleteOne({ _id: req.params.id });
+    } else {
+      return res.status(401).json({ error: "Cant delete polls that aren't yours :P" });
+    }
+    res.status(200).json({message: `${poll.question} poll deleted`});
+  //else throw unauthorized to delete poll msg
+  } catch(error) {
+      res.status(500).json({error : error.message});
+  }
+});
+
 // get poll by id
 app.get("/poll/:id", async (req, res) => {
   try {
@@ -79,33 +181,37 @@ app.get("/poll/:id", async (req, res) => {
   }
 });
 
-// create poll
-app.post("/poll/create", async (req, res) => {
-  const { question, activeDays, options } = req.body;
-  //gets deadline 
-  const deadlineDate = new Date();
-  deadlineDate.setDate(deadlineDate.getDate() + activeDays);
-  //create poll obj
-  const poll = {
-    question,
-    deadline: deadlineDate,
-    options: options.map((option) => {
-      option.vote = 0;
-      return option;
-    }),
-  };
-  //add poll obj to db
+// update vote count for private polls
+app.post("/poll/private/:id", isAuthenticated, async (req, res) => {
+  //check request ip in database (get ip from req.ip) 
+  //if found, return error saying user cant vote twice
+  //if not found, add it to db and continue letting the user vote
+  //not sure how it works, so might have to get the ip from the frontend instead?
+  
   try {
-    const pollCreated = await Poll(poll);
-    await pollCreated.save();
-    res.send(pollCreated);
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(501).send("Invalid id");
+      return;
+    }
+    const poll = await Poll.findById(req.params.id);
+    if (!poll) {
+      res.status(404).send("Not found!");
+    }
+
+    const { option: optionIndex } = req.body;
+    poll.options[optionIndex].vote += 1;
+
+    poll.markModified("options");
+    await poll.save();
+    res.send(poll);
   } catch (error) {
-    console.log(error);
+    //501 means not implemented
     res.status(501).send(error);
   }
 });
 
-// update vote count
+
+// update vote count for public polls
 app.post("/poll/:id", async (req, res) => {
   //check request ip in database (get ip from req.ip) 
   //if found, return error saying user cant vote twice
@@ -153,7 +259,8 @@ app.post("/user/create", async (req, res) => {
     const user = {
       username,
       email,
-      password: hash
+      password: hash,
+      polls: []
     };
 
     const userCreated = await User(user);
@@ -196,12 +303,12 @@ app.post("/user/login", async (req, res) => {
       return;
     }
 
-    //jwt stuff
+    //create jwt to be stored in an httponly cookie
     const token = jwt.sign(
-      { id: potentialUser._id, username: potentialUser.username, email: potentialUser.email },
+      { id: potentialUser._id, username: potentialUser.username, email: potentialUser.email, polls:potentialUser.polls },
       JWT_SECRET
     );
-    
+    //create httponly cookie
     res.cookie("token", token, {
       httpOnly: true, // Prevent JS access
       secure: false, // Use HTTPS in production
@@ -209,44 +316,46 @@ app.post("/user/login", async (req, res) => {
       maxAge: 3600000, // 1 hour
     });
 
-    //everything is fine, so return the jwt token
+    //everything is fine, so return ok status with signeed in message
     res.status(200).json({message: "signed in :)"});
     } catch (error) {
-      //on an error, return error message
       //500 means internal server error
       res.status(500).json({error : error.message});
   }
 
 });
 
+//logout user
 app.post("/user/logout", (req, res) => {
-
   // Clear the httpOnly cookie
   res.clearCookie("token", {
     httpOnly: true,
     secure: false,
     sameSite: "Strict",
   });
-
   // Send a success response
   res.status(200).json({message: "Logged out successfully"});
-  res.end();
 });
 
 //get user information and return it in json format so it can be used on the frontend
 app.get("/user", (req, res) => {
   //check if there is a token
   if (!req.cookies.token) {
-    
+    res.status(401).json({message:"no jwt cookie found"})
   }
+  //jwt from request
+  const token = req.cookies.token;
+  //verifies using token and secret key
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    return res.status(200).json(decoded);
+  });
 });
 
 
-//delete poll (if authenticated and created it)
 
-//if authenticated, add poll to account (likke a favoritees tab)
-
-//create private poll (if authenticated) and add to account
 
 //vote on private poll (if authenticated)
 
